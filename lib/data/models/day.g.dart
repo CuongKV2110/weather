@@ -46,6 +46,6 @@ Map<String, dynamic> _$DayToJson(Day instance) => <String, dynamic>{
       'daily_chance_of_rain': instance.dailyChanceOfRain,
       'daily_will_it_snow': instance.dailyWillItSnow,
       'daily_chance_of_snow': instance.dailyChanceOfSnow,
-      'gust_mph': instance.condition,
+      'condition': instance.condition,
       'uv': instance.uv,
     };

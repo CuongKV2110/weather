@@ -1,13 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:weather/data/models/forecast_day.dart';
-import 'package:weather/generated/l10n.dart';
-import 'package:weather/presentation/bloc/app_bloc.dart';
-import 'package:weather/presentation/bloc/app_event.dart';
-import 'package:weather/presentation/bloc/app_state.dart';
-import 'package:intl/date_symbol_data_local.dart';
+import 'package:weather/data/models/weather.dart';
+import 'package:weather/injection.dart';
+import 'package:weather/presentation/bloc/cubit/weather_cubit.dart';
+import 'package:weather/presentation/bloc/cubit/weather_state.dart';
 import 'package:weather/presentation/resources/colors.dart';
 import 'package:weather/presentation/resources/dimensions.dart';
 import 'package:weather/presentation/widgets/weather_next_day.dart';
@@ -16,110 +14,96 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _Screen1State createState() => _Screen1State();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final AppBloc _appBloc = AppBloc();
+class _Screen1State extends State<HomeScreen> {
+  WeatherCubit weatherCubit = getIt();
   int timestamp = 0;
   int time = 0;
 
   @override
   void initState() {
     super.initState();
-    print("initState");
-    _appBloc.add(
-      GetData(),
-    );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _appBloc.dispose();
+    weatherCubit.getWeather();
   }
 
   @override
   Widget build(BuildContext context) {
+    print("Call Build");
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(S.of(context).app_name),
-          centerTitle: true,
-        ),
-        body: BlocBuilder(
-          bloc: _appBloc,
+        body: BlocBuilder<WeatherCubit, WeatherState>(
+          bloc: weatherCubit,
           builder: (context, state) {
-            if (state is Loading) {
+            if (state is WeatherInitial) {
+              print("WeatherInitial");
+              return const Center();
+            } else if (state is WeatherLoading) {
+              print("WeatherLoading");
               return const Center(
-                child: CupertinoActivityIndicator(
-                  radius: 12,
-                ),
+                child: CircularProgressIndicator(),
+              );
+            } else if (state is WeatherLoaded) {
+              print("WeatherLoaded");
+              return _build(state.weather);
+            } else {
+              print("Loi");
+              return const Center(
+                child: Text('Loi'),
               );
             }
-
-            if (state is Error) {
-              return Center(
-                child: Text(
-                  state.errorMessage,
-                  style: const TextStyle(color: AppColors.red),
-                ),
-              );
-            }
-
-            if (_appBloc.weather != null) {
-              timestamp = _appBloc.weather!.current.lastUpdatedEpoch;
-              DateTime datetime =
-                  DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-              time = datetime.hour;
-              print(datetime);
-              print(time);
-
-              return Container(
-                width: AppDimensions.d100w,
-                height: AppDimensions.d100h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: (time < 12)
-                        ? [
-                            AppColors.red,
-                            AppColors.colorItem2,
-                          ]
-                        : (time < 18
-                            ? [
-                                AppColors.blue700,
-                                AppColors.blue1,
-                              ]
-                            : [
-                                AppColors.color19042B,
-                                AppColors.color42329A,
-                              ]),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _currentWeather(),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    _futureWeather(),
-                  ],
-                ),
-              );
-            }
-            return const SizedBox();
           },
         ),
       ),
     );
   }
 
-  Widget _currentWeather() {
+  Widget _build(Weather weather) {
+    timestamp = weather.location.localtimeEpoch;
+    DateTime datetime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    time = datetime.hour;
+    //time = 19;
+    print(datetime);
+    print(time);
+    return Container(
+      width: AppDimensions.d100w,
+      height: AppDimensions.d100h,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: (time < 12)
+              ? [
+                  AppColors.red,
+                  AppColors.colorItem2,
+                ]
+              : (time < 18
+                  ? [
+                      AppColors.blue700,
+                      AppColors.blue1,
+                    ]
+                  : [
+                      AppColors.color19042B,
+                      AppColors.color42329A,
+                    ]),
+        ),
+      ),
+      child: Column(
+        children: [
+          _currentWeather(context, weather),
+          const SizedBox(
+            height: 20,
+          ),
+          _futureWeather(context, weather),
+        ],
+      ),
+    );
+  }
+
+  Widget _currentWeather(context, weather) {
     DateTime tempDate =
-        DateFormat("yyyy-MM-dd").parse(_appBloc.weather!.location.localtime);
-    initializeDateFormatting('es');
+        DateFormat("yyyy-MM-dd").parse(weather.location.localtime);
     return SizedBox(
       width: AppDimensions.d100w,
       height: AppDimensions.d45h,
@@ -130,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 16,
           ),
           Text(
-            _appBloc.weather!.location.name,
+            weather.location.name,
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 40,
@@ -141,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 8,
           ),
           Text(
-            _appBloc.weather!.current.condition.text,
+            weather.current.condition.text,
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 20,
@@ -151,13 +135,13 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 120,
             height: 120,
             child: Image.network(
-              'http:' + _appBloc.weather!.current.condition.icon,
+              'http:' + weather.current.condition.icon,
               color: AppColors.yellow,
               fit: BoxFit.cover,
             ),
           ),
           Text(
-            _appBloc.weather!.current.tempC.toString(),
+            weather.current.tempC.toString(),
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 60,
@@ -179,14 +163,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _futureWeather() {
-    List<ForecastDay> list = _appBloc.weather!.forecast.forecastday;
-    initializeDateFormatting('es');
+  Widget _futureWeather(context, weather) {
+    List<ForecastDay> list = weather.forecast.forecastday;
     return SizedBox(
       width: AppDimensions.d100w,
       height: AppDimensions.d36h,
       child: ListView.builder(
-        itemCount: _appBloc.weather!.forecast.forecastday.length,
+        itemCount: weather.forecast.forecastday.length,
         itemBuilder: (context, index) {
           return WeatherNextDay(list[index]);
         },

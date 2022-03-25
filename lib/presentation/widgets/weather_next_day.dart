@@ -58,7 +58,9 @@ class _WeatherNextDayState extends State<WeatherNextDay> {
               height: 40,
               child: Image.network(
                 'http:' + widget.forecastDay.day.condition.icon,
-                color: widget.forecastDay.day.condition.text == 'clear'
+                color: (widget.forecastDay.day.condition.text == 'Sunny' ||
+                        widget.forecastDay.day.condition.text ==
+                            'Partly cloudy')
                     ? Colors.yellow
                     : Colors.white,
                 fit: BoxFit.cover,

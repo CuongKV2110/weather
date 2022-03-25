@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sizer/sizer.dart';
+import 'package:weather/presentation/bloc/cubit/weather_cubit.dart';
 import 'package:weather/presentation/pages/home_screen.dart';
 
 import 'generated/l10n.dart';
+import 'injection.dart';
 
-void main() {
+void main() async {
+  configureDependencies();
   runApp(const MyApp());
 }
 
@@ -17,13 +21,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  WeatherCubit weatherCubit = getIt();
   @override
   Widget build(BuildContext context) {
     return Sizer(
       builder: (context, orientation, deviceType) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: HomeScreen(),
+          home: BlocProvider(
+            create: (context) => weatherCubit,
+            child: const HomeScreen(),
+          ),
           locale: const Locale('en'),
           localizationsDelegates: const [
             S.delegate,

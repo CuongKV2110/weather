@@ -38,7 +38,8 @@ dependencies:
   bloc: any
   equatable: ^2.0.3
   injectable: ^1.5.3
-
+  cached_network_image: ^3.2.0
+  alice: ^0.2.5
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sizer/sizer.dart';
-import 'package:weather/presentation/bloc/cubit/weather_cubit.dart';
-import 'package:weather/presentation/pages/home_screen.dart';
+import 'package:weather/presentation/home/bloc/cubit/weather_cubit.dart';
+import 'package:weather/presentation/home/pages/home_screen.dart';
 
 import 'generated/l10n.dart';
 import 'injection.dart';
